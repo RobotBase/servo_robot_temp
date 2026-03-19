@@ -145,27 +145,27 @@ print(f"[IK] 站立角度 (度): K0={math.degrees(STAND_K0):.1f}  "
 # 关节映射: IK输出 → 舵机原始值
 # direction: IK角度增大时，舵机值应该增大(+1)还是减小(-1)
 # 从手动示教数据推断:
-#   left_hip_pitch(K0):  站立809, 前摆620 → 前摆时K0增大但值减小 → dir=-1
-#   right_hip_pitch(K0): 站立475, 前摆669 → 前摆时K0增大且值增大 → dir=+1
-#   left_knee(H):       站立462, 弯曲396 → 弯曲时H增大但值减小  → dir=-1
-#   right_knee(H):      站立465, 弯曲558 → 弯曲时H增大且值增大  → dir=+1
-#   left_ankle_pitch(A0): 站立431, A0增大→值增大 → dir=+1
-#   right_ankle_pitch(A0): 站立812, A0增大→值减小 → dir=-1
+#   left_hip_pitch(K0):  值增大 → 前摆  → dir=+1
+#   right_hip_pitch(K0): 值减小 → 前摆  → dir=-1
+#   left_knee(H):       值减小 → 弯曲   (462→396)  → dir=-1
+#   right_knee(H):      值增大 → 弯曲   (465→558)  → dir=+1
+#   left_ankle_pitch(A0): 值减小 → 补偿  → dir=-1
+#   right_ankle_pitch(A0): 值增大 → 补偿  → dir=+1
 
 JOINT_MAP = {
     "left": {
         # (零位key, IK分量索引, 方向)
         "hip_yaw":     ("left_hip_yaw",     1, -1),   # K1 (roll)
-        "hip_pitch":   ("left_hip_pitch",    0, -1),   # K0
+        "hip_pitch":   ("left_hip_pitch",    0, +1),   # K0 ← 已修正
         "knee":        ("left_knee",         2, -1),   # H
-        "ankle_pitch": ("left_ankle_pitch",  3, +1),   # A0
+        "ankle_pitch": ("left_ankle_pitch",  3, -1),   # A0 ← 已修正
         "ankle_roll":  ("left_ankle_roll",   4, -1),   # A1
     },
     "right": {
         "hip_yaw":     ("right_hip_yaw",     1, +1),   # K1 (roll)
-        "hip_pitch":   ("right_hip_pitch",   0, +1),   # K0
+        "hip_pitch":   ("right_hip_pitch",   0, -1),   # K0 ← 已修正
         "knee":        ("right_knee",        2, +1),   # H
-        "ankle_pitch": ("right_ankle_pitch", 3, -1),   # A0
+        "ankle_pitch": ("right_ankle_pitch", 3, +1),   # A0 ← 已修正
         "ankle_roll":  ("right_ankle_roll",  4, +1),   # A1
     },
 }

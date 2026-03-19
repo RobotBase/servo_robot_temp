@@ -52,16 +52,16 @@ DEFAULT_ZERO = {
 JOINT_MAP = {
     "left": {
         "hip_yaw":     ("left_hip_yaw",     1, -1),
-        "hip_pitch":   ("left_hip_pitch",    0, -1),
+        "hip_pitch":   ("left_hip_pitch",    0, +1),   # 已修正
         "knee":        ("left_knee",         2, -1),
-        "ankle_pitch": ("left_ankle_pitch",  3, +1),
+        "ankle_pitch": ("left_ankle_pitch",  3, -1),   # 已修正
         "ankle_roll":  ("left_ankle_roll",   4, -1),
     },
     "right": {
         "hip_yaw":     ("right_hip_yaw",     1, +1),
-        "hip_pitch":   ("right_hip_pitch",   0, +1),
+        "hip_pitch":   ("right_hip_pitch",   0, -1),   # 已修正
         "knee":        ("right_knee",        2, +1),
-        "ankle_pitch": ("right_ankle_pitch", 3, -1),
+        "ankle_pitch": ("right_ankle_pitch", 3, +1),   # 已修正
         "ankle_roll":  ("right_ankle_roll",  4, +1),
     },
 }
