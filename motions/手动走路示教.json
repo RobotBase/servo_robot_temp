@@ -1,0 +1,144 @@
+{
+  "name": "44",
+  "description": "",
+  "created_at": "2026-03-16T21:36:41.913186+08:00",
+  "frame_count": 9,
+  "total_duration_ms": 51882,
+  "keyframes": [
+    {
+      "timestamp_ms": 0,
+      "positions": {
+        "left_hip_yaw": 430,
+        "left_hip_pitch": 816,
+        "left_knee": 465,
+        "left_ankle_pitch": 420,
+        "left_ankle_roll": 535,
+        "right_hip_yaw": 369,
+        "right_hip_pitch": 521,
+        "right_knee": 558,
+        "right_ankle_pitch": 869,
+        "right_ankle_roll": 624
+      }
+    },
+    {
+      "timestamp_ms": 12169,
+      "positions": {
+        "left_hip_yaw": 443,
+        "left_hip_pitch": 817,
+        "left_knee": 461,
+        "left_ankle_pitch": 392,
+        "left_ankle_roll": 538,
+        "right_hip_yaw": 363,
+        "right_hip_pitch": 591,
+        "right_knee": 542,
+        "right_ankle_pitch": 820,
+        "right_ankle_roll": 621
+      }
+    },
+    {
+      "timestamp_ms": 15098,
+      "positions": {
+        "left_hip_yaw": 430,
+        "left_hip_pitch": 818,
+        "left_knee": 396,
+        "left_ankle_pitch": 386,
+        "left_ankle_roll": 537,
+        "right_hip_yaw": 347,
+        "right_hip_pitch": 591,
+        "right_knee": 541,
+        "right_ankle_pitch": 757,
+        "right_ankle_roll": 620
+      }
+    },
+    {
+      "timestamp_ms": 21097,
+      "positions": {
+        "left_hip_yaw": 431,
+        "left_hip_pitch": 779,
+        "left_knee": 417,
+        "left_ankle_pitch": 387,
+        "left_ankle_roll": 537,
+        "right_hip_yaw": 350,
+        "right_hip_pitch": 455,
+        "right_knee": 507,
+        "right_ankle_pitch": 857,
+        "right_ankle_roll": 634
+      }
+    },
+    {
+      "timestamp_ms": 24217,
+      "positions": {
+        "left_hip_yaw": 430,
+        "left_hip_pitch": 780,
+        "left_knee": 438,
+        "left_ankle_pitch": 461,
+        "left_ankle_roll": 555,
+        "right_hip_yaw": 351,
+        "right_hip_pitch": 417,
+        "right_knee": 508,
+        "right_ankle_pitch": 889,
+        "right_ankle_roll": 620
+      }
+    },
+    {
+      "timestamp_ms": 28894,
+      "positions": {
+        "left_hip_yaw": 429,
+        "left_hip_pitch": 779,
+        "left_knee": 439,
+        "left_ankle_pitch": 423,
+        "left_ankle_roll": 556,
+        "right_hip_yaw": 352,
+        "right_hip_pitch": 604,
+        "right_knee": 508,
+        "right_ankle_pitch": 765,
+        "right_ankle_roll": 621
+      }
+    },
+    {
+      "timestamp_ms": 39151,
+      "positions": {
+        "left_hip_yaw": 435,
+        "left_hip_pitch": 620,
+        "left_knee": 404,
+        "left_ankle_pitch": 499,
+        "left_ankle_roll": 556,
+        "right_hip_yaw": 378,
+        "right_hip_pitch": 669,
+        "right_knee": 508,
+        "right_ankle_pitch": 740,
+        "right_ankle_roll": 637
+      }
+    },
+    {
+      "timestamp_ms": 44200,
+      "positions": {
+        "left_hip_yaw": 417,
+        "left_hip_pitch": 712,
+        "left_knee": 405,
+        "left_ankle_pitch": 497,
+        "left_ankle_roll": 553,
+        "right_hip_yaw": 359,
+        "right_hip_pitch": 421,
+        "right_knee": 509,
+        "right_ankle_pitch": 907,
+        "right_ankle_roll": 617
+      }
+    },
+    {
+      "timestamp_ms": 51882,
+      "positions": {
+        "left_hip_yaw": 434,
+        "left_hip_pitch": 712,
+        "left_knee": 457,
+        "left_ankle_pitch": 497,
+        "left_ankle_roll": 536,
+        "right_hip_yaw": 379,
+        "right_hip_pitch": 567,
+        "right_knee": 504,
+        "right_ankle_pitch": 795,
+        "right_ankle_roll": 625
+      }
+    }
+  ]
+}
