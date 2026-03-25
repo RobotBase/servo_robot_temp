@@ -5,7 +5,7 @@ teach.py — 试教录制交互工具
 交互式终端界面，用于录制和回放机器人动作。
 
 用法:
-    python tools/teach.py --port COM3
+    python tools/teach.py --port COM11
 """
 
 import argparse

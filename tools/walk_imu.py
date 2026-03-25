@@ -7,13 +7,13 @@ walk_imu.py — 闭环 UVC 步行控制 (舵机 + IMU 双串口)
 
 架构:
     PC
-    ├── COM3 (115200)  → 舵机总线 (LX-15D × 10)
+    ├── COM11 (115200) → 舵机总线 (LX-15D × 10)
     └── COM5 (460800)  → YIS321 IMU
 
 用法:
-    python tools/walk_imu.py --servo-port COM3 --imu-port COM5
-    python tools/walk_imu.py --servo-port COM3 --imu-port COM5 --mode balance
-    python tools/walk_imu.py --servo-port COM3 --imu-port COM5 --mode walk
+    python tools/walk_imu.py --servo-port COM11 --imu-port COM5
+    python tools/walk_imu.py --servo-port COM11 --imu-port COM5 --mode balance
+    python tools/walk_imu.py --servo-port COM11 --imu-port COM5 --mode walk
 """
 
 import argparse
@@ -43,26 +43,26 @@ HEIGHT = 190.0
 SERVO_UNITS_PER_DEG = 1.0 / 0.24
 
 DEFAULT_ZERO = {
-    "left_hip_yaw": 446, "left_hip_pitch": 809, "left_knee": 462,
-    "left_ankle_pitch": 431, "left_ankle_roll": 560,
-    "right_hip_yaw": 380, "right_hip_pitch": 475, "right_knee": 465,
-    "right_ankle_pitch": 812, "right_ankle_roll": 635,
+    "right_hip_yaw": 446, "right_hip_pitch": 809, "right_knee": 462,
+    "right_ankle_pitch": 431, "right_ankle_roll": 560,
+    "left_hip_yaw": 380, "left_hip_pitch": 475, "left_knee": 465,
+    "left_ankle_pitch": 812, "left_ankle_roll": 635,
 }
 
 JOINT_MAP = {
-    "left": {
-        "hip_yaw":     ("left_hip_yaw",     1, -1),
-        "hip_pitch":   ("left_hip_pitch",    0, +1),   # 已修正
-        "knee":        ("left_knee",         2, -1),
-        "ankle_pitch": ("left_ankle_pitch",  3, -1),   # 已修正
-        "ankle_roll":  ("left_ankle_roll",   4, -1),
-    },
     "right": {
-        "hip_yaw":     ("right_hip_yaw",     1, +1),
-        "hip_pitch":   ("right_hip_pitch",   0, -1),   # 已修正
-        "knee":        ("right_knee",        2, +1),
-        "ankle_pitch": ("right_ankle_pitch", 3, +1),   # 已修正
-        "ankle_roll":  ("right_ankle_roll",  4, +1),
+        "hip_yaw":     ("right_hip_yaw",     1, -1),
+        "hip_pitch":   ("right_hip_pitch",    0, +1),   # 已修正
+        "knee":        ("right_knee",         2, -1),
+        "ankle_pitch": ("right_ankle_pitch",  3, -1),   # 已修正
+        "ankle_roll":  ("right_ankle_roll",   4, -1),
+    },
+    "left": {
+        "hip_yaw":     ("left_hip_yaw",     1, +1),
+        "hip_pitch":   ("left_hip_pitch",   0, -1),   # 已修正
+        "knee":        ("left_knee",        2, +1),
+        "ankle_pitch": ("left_ankle_pitch", 3, +1),   # 已修正
+        "ankle_roll":  ("left_ankle_roll",  4, +1),
     },
 }
 
@@ -265,16 +265,14 @@ class UVCController:
             {关节名: 原始舵机值} dict
         """
         # 根据支撑腿选择左右脚参数
-        if self.jikuasi == 0:
-            # 左脚支撑
+        if self.jikuasi == 1:  # 左腿支撑
             left_x = self.dxi - self.swx
             left_y = self.dyi - self.swy
             left_h = self.autoH
             right_x = self.dxis - self.swx
             right_y = self.dyis + self.swy
             right_h = self.autoH - self.fh
-        else:
-            # 右脚支撑
+        else:  # 右腿支撑
             left_x = self.dxis - self.swx
             left_y = self.dyis + self.swy
             left_h = self.autoH - self.fh
@@ -475,7 +473,7 @@ def do_walk_uvc(robot, zero, imu_thread, steps=6, period=1.2):
 
 def main():
     parser = argparse.ArgumentParser(description="UVC 闭环步行 (舵机+IMU)")
-    parser.add_argument("--servo-port", default="COM3", help="舵机串口")
+    parser.add_argument("--servo-port", default="COM11", help="舵机串口")
     parser.add_argument("--imu-port", default="COM5", help="IMU 串口")
     parser.add_argument("--imu-baud", type=int, default=460800, help="IMU 波特率")
     parser.add_argument("--mode", default="walk",

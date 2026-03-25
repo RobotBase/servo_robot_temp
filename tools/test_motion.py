@@ -3,8 +3,8 @@
 test_motion.py — 基础运动测试工具
 
 用法:
-    python tools/test_motion.py --port COM3
-    python tools/test_motion.py --port COM3 --test home
+    python tools/test_motion.py --port COM11
+    python tools/test_motion.py --port COM11 --test home
 """
 
 import argparse

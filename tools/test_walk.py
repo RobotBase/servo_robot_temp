@@ -6,7 +6,7 @@ test_walk.py — 双足机器人步行完整测试脚本
 📋 每一步都有详细说明，测试人员只需按提示操作并反馈结果。
 
 使用方法:
-    python tools/test_walk.py --port COM3
+    python tools/test_walk.py --port COM11
 
 ⚠️  安全注意:
     - 全程用手扶住机器人，防止倒地损坏舵机
@@ -45,34 +45,34 @@ SERVO_UNITS_PER_DEG = 1.0 / 0.24  # ≈ 4.167
 
 # 零位 (站立时各舵机原始值)
 DEFAULT_ZERO = {
-    "left_hip_yaw": 446,
-    "left_hip_pitch": 809,
-    "left_knee": 462,
-    "left_ankle_pitch": 431,
-    "left_ankle_roll": 560,
-    "right_hip_yaw": 380,
-    "right_hip_pitch": 475,
-    "right_knee": 465,
-    "right_ankle_pitch": 812,
-    "right_ankle_roll": 635,
+    "right_hip_yaw": 446,
+    "right_hip_pitch": 809,
+    "right_knee": 462,
+    "right_ankle_pitch": 431,
+    "right_ankle_roll": 560,
+    "left_hip_yaw": 380,
+    "left_hip_pitch": 475,
+    "left_knee": 465,
+    "left_ankle_pitch": 812,
+    "left_ankle_roll": 635,
 }
 
 # 关节方向映射 (IK角度增大时舵机值的变化方向)
 # ⚠️ 这是需要测试验证的核心参数!
 JOINT_MAP = {
-    "left": {
-        "hip_yaw":     ("left_hip_yaw",     1, -1),
-        "hip_pitch":   ("left_hip_pitch",    0, +1),
-        "knee":        ("left_knee",         2, -1),
-        "ankle_pitch": ("left_ankle_pitch",  3, -1),
-        "ankle_roll":  ("left_ankle_roll",   4, -1),
-    },
     "right": {
-        "hip_yaw":     ("right_hip_yaw",     1, +1),
-        "hip_pitch":   ("right_hip_pitch",   0, -1),
-        "knee":        ("right_knee",        2, +1),
-        "ankle_pitch": ("right_ankle_pitch", 3, +1),
-        "ankle_roll":  ("right_ankle_roll",  4, +1),
+        "hip_yaw":     ("right_hip_yaw",     1, -1),
+        "hip_pitch":   ("right_hip_pitch",    0, +1),
+        "knee":        ("right_knee",         2, -1),
+        "ankle_pitch": ("right_ankle_pitch",  3, -1),
+        "ankle_roll":  ("right_ankle_roll",   4, -1),
+    },
+    "left": {
+        "hip_yaw":     ("left_hip_yaw",     1, +1),
+        "hip_pitch":   ("left_hip_pitch",   0, -1),
+        "knee":        ("left_knee",        2, +1),
+        "ankle_pitch": ("left_ankle_pitch", 3, +1),
+        "ankle_roll":  ("left_ankle_roll",  4, +1),
     },
 }
 
@@ -420,41 +420,6 @@ def step_4_single_joint(robot: Robot, zero: dict[str, int], log: TestLog) -> boo
     # 测试项目
     tests = [
         {
-            "name": "左髋前后摆 (left_hip_pitch)",
-            "joint": "left_hip_pitch",
-            "expect_pos": "正方向: 机器人左腿应该向前迈",
-            "expect_neg": "负方向: 机器人左腿应该向后摆",
-            "amount": 60,
-        },
-        {
-            "name": "左膝弯曲 (left_knee)",
-            "joint": "left_knee",
-            "expect_pos": "正方向: 左膝应该弯曲(蹲下)",
-            "expect_neg": "负方向: 左膝应该伸直",
-            "amount": 50,
-        },
-        {
-            "name": "左踝前后 (left_ankle_pitch)",
-            "joint": "left_ankle_pitch",
-            "expect_pos": "正方向: 左脚尖应该翘起",
-            "expect_neg": "负方向: 左脚尖应该压下",
-            "amount": 50,
-        },
-        {
-            "name": "左髋侧摆 (left_hip_yaw)",
-            "joint": "left_hip_yaw",
-            "expect_pos": "正方向: 左腿应该向外侧展开",
-            "expect_neg": "负方向: 左腿应该向内侧收拢",
-            "amount": 30,
-        },
-        {
-            "name": "左踝侧摆 (left_ankle_roll)",
-            "joint": "left_ankle_roll",
-            "expect_pos": "正方向: 左脚应该向外侧翻",
-            "expect_neg": "负方向: 左脚应该向内侧翻",
-            "amount": 30,
-        },
-        {
             "name": "右髋前后摆 (right_hip_pitch)",
             "joint": "right_hip_pitch",
             "expect_pos": "正方向: 机器人右腿应该向前迈",
@@ -464,7 +429,7 @@ def step_4_single_joint(robot: Robot, zero: dict[str, int], log: TestLog) -> boo
         {
             "name": "右膝弯曲 (right_knee)",
             "joint": "right_knee",
-            "expect_pos": "正方向: 右膝应该弯曲",
+            "expect_pos": "正方向: 右膝应该弯曲(蹲下)",
             "expect_neg": "负方向: 右膝应该伸直",
             "amount": 50,
         },
@@ -487,6 +452,41 @@ def step_4_single_joint(robot: Robot, zero: dict[str, int], log: TestLog) -> boo
             "joint": "right_ankle_roll",
             "expect_pos": "正方向: 右脚应该向外侧翻",
             "expect_neg": "负方向: 右脚应该向内侧翻",
+            "amount": 30,
+        },
+        {
+            "name": "左髋前后摆 (left_hip_pitch)",
+            "joint": "left_hip_pitch",
+            "expect_pos": "正方向: 机器人左腿应该向前迈",
+            "expect_neg": "负方向: 机器人左腿应该向后摆",
+            "amount": 60,
+        },
+        {
+            "name": "左膝弯曲 (left_knee)",
+            "joint": "left_knee",
+            "expect_pos": "正方向: 左膝应该弯曲",
+            "expect_neg": "负方向: 左膝应该伸直",
+            "amount": 50,
+        },
+        {
+            "name": "左踝前后 (left_ankle_pitch)",
+            "joint": "left_ankle_pitch",
+            "expect_pos": "正方向: 左脚尖应该翘起",
+            "expect_neg": "负方向: 左脚尖应该压下",
+            "amount": 50,
+        },
+        {
+            "name": "左髋侧摆 (left_hip_yaw)",
+            "joint": "left_hip_yaw",
+            "expect_pos": "正方向: 左腿应该向外侧展开",
+            "expect_neg": "负方向: 左腿应该向内侧收拢",
+            "amount": 30,
+        },
+        {
+            "name": "左踝侧摆 (left_ankle_roll)",
+            "joint": "left_ankle_roll",
+            "expect_pos": "正方向: 左脚应该向外侧翻",
+            "expect_neg": "负方向: 左脚应该向内侧翻",
             "amount": 30,
         },
     ]
@@ -765,7 +765,7 @@ def step_7_full_walk(robot: Robot, zero: dict[str, int], log: TestLog):
 
 def main():
     parser = argparse.ArgumentParser(description="双足机器人步行完整测试")
-    parser.add_argument("--port", default="COM3", help="串口名")
+    parser.add_argument("--port", default="COM11", help="串口名")
     parser.add_argument("--zero-file", default=None, help="零位文件路径")
     parser.add_argument("--skip-to", type=int, default=0,
                         help="跳过前N步 (用于断点续测)")

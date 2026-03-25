@@ -1,23 +1,23 @@
 {
-  "name": "45",
-  "description": "",
-  "created_at": "2026-03-16T21:44:50.444319+08:00",
+  "name": "零位",
+  "description": "walk.py set_zero 生成",
+  "created_at": "2026-03-24T09:17:16.717438+08:00",
   "frame_count": 1,
   "total_duration_ms": 0,
   "keyframes": [
     {
       "timestamp_ms": 0,
       "positions": {
-        "left_hip_yaw": 446,
-        "left_hip_pitch": 809,
-        "left_knee": 462,
-        "left_ankle_pitch": 431,
-        "left_ankle_roll": 560,
-        "right_hip_yaw": 380,
-        "right_hip_pitch": 475,
-        "right_knee": 465,
-        "right_ankle_pitch": 812,
-        "right_ankle_roll": 635
+        "right_hip_yaw": 447,
+        "right_hip_pitch": 808,
+        "right_knee": 461,
+        "right_ankle_pitch": 430,
+        "right_ankle_roll": 553,
+        "left_hip_yaw": 377,
+        "left_hip_pitch": 512,
+        "left_knee": 512,
+        "left_ankle_pitch": 811,
+        "left_ankle_roll": 635
       }
     }
   ]

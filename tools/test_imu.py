@@ -7,11 +7,11 @@ test_imu.py — YIS321 IMU 完整测试脚本
 
 使用方法:
     python tools/test_imu.py --port COM5
-    python tools/test_imu.py --port COM5 --baud 460800
+    python tools/test_imu.py --port COM15 --baud 921600
 
 ⚠️ 注意：IMU 串口和舵机串口是不同的！
     - 舵机串口: 一般 COM3, 波特率 115200
-    - IMU 串口: 一般 COM5, 波特率 460800
+    - IMU 串口: 一般 COM15, 波特率 921600
 """
 
 import argparse
@@ -36,8 +36,8 @@ class TestLog:
     def log(self, step, result, details=""):
         self.entries.append({"time": datetime.now().isoformat(), "step": step,
                              "result": result, "details": details})
-        icon = "✅" if result == "PASS" else "❌" if result == "FAIL" else "⚠️"
-        print(f"    {icon} [{result}] {details}" if details else f"    {icon} [{result}]")
+        icon = "PASS" if result == "PASS" else "FAIL" if result == "FAIL" else "WARN"
+        print(f"    [{icon}] [{result}] {details}" if details else f"    [{icon}] [{result}]")
     def save(self, filepath):
         report = {"test_date": self.start_time.isoformat(),
                   "total": len(self.entries),
@@ -46,18 +46,18 @@ class TestLog:
                   "entries": self.entries}
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
-        print(f"\n📄 测试报告已保存: {filepath}")
+        print(f"\n测试报告已保存: {filepath}")
     def summary(self):
         p = sum(1 for e in self.entries if e["result"] == "PASS")
         f = sum(1 for e in self.entries if e["result"] == "FAIL")
         print(f"\n{'='*60}")
-        print(f"  测试总结: {p}✅ / {f}❌  (共 {len(self.entries)} 项)")
+        print(f"  测试总结: {p}PASS / {f}FAIL  (共 {len(self.entries)} 项)")
         print(f"{'='*60}")
 
 
 def wait_input(prompt="按 Enter 继续..."):
     try:
-        return input(f"    👉 {prompt} ").strip()
+        return input(f"    {prompt} ").strip()
     except EOFError:
         return ""
 
@@ -119,12 +119,12 @@ def step_1_connect(driver, log):
     print("="*60)
     print(f"  串口: {driver.port}  波特率: {driver.baudrate}")
     print()
-    print("  📋 确认清单:")
+    print("  确认清单:")
     print("     □ IMU 模块已通过 USB-TTL 连接到电脑")
     print("     □ IMU 模块已供电 (红色电源灯亮)")
     print("     □ 接线: TX→RX, RX→TX, GND→GND")
     print()
-    print("  ⚠️ 注意: IMU串口 ≠ 舵机串口! 它们是两个不同的 COM 口")
+    print("  注意: IMU串口 ≠ 舵机串口! 它们是两个不同的 COM 口")
     print()
 
     wait_input("确认就绪后按 Enter")
@@ -134,11 +134,11 @@ def step_1_connect(driver, log):
         log.log("连接", "PASS", f"{driver.port} @ {driver.baudrate}")
         return True
     except Exception as e:
-        print(f"  ❌ 连接失败: {e}")
+        print(f"  连接失败: {e}")
         log.log("连接", "FAIL", str(e))
-        print("\n  🔧 排查:")
+        print("\n  排查:")
         print("     1. 确认串口号 (设备管理器中查看)")
-        print("     2. 确认波特率 (YIS321 默认 460800)")
+        print("     2. 确认波特率 (YIS321 默认 921600)")
         print("     3. 关闭其他占用串口的软件")
         return False
 
@@ -153,15 +153,15 @@ def step_2_first_data(driver, log):
     data = driver.read_blocking(timeout=5.0)
 
     if data is None:
-        print("  ❌ 5 秒内没有收到数据!")
+        print("  5 秒内没有收到数据!")
         log.log("首次读取", "FAIL", "超时")
-        print("\n  🔧 排查:")
+        print("\n  排查:")
         print("     1. 检查 TX/RX 是否接反")
         print("     2. 确认波特率正确 (试试 --baud 115200 或 --baud 921600)")
         print("     3. 检查 IMU 是否有数据输出 (指示灯是否闪烁)")
         return False
 
-    print(f"  ✅ 收到数据!")
+    print(f"  收到数据!")
     print(f"  {data}")
     print(f"\n  帧统计: 成功={driver.frame_count}  错误={driver.error_count}")
     log.log("首次读取", "PASS", f"帧数={driver.frame_count}")
@@ -173,7 +173,7 @@ def step_3_data_rate(driver, log):
     print("\n" + "="*60)
     print("  STEP 3: 数据速率测试 (持续2秒)")
     print("="*60)
-    print("  📏 IMU 放在桌上不动, 统计帧率和错误率...")
+    print("  IMU 放在桌上不动, 统计帧率和错误率...")
     print()
 
     wait_input("将 IMU 平放在桌上, 按 Enter 开始")
@@ -219,7 +219,7 @@ def step_4_static(driver, log):
     print("\n" + "="*60)
     print("  STEP 4: 静态精度测试")
     print("="*60)
-    print("  📏 IMU 平放桌上3秒, 测量静态漂移")
+    print("  IMU 平放桌上3秒, 测量静态漂移")
     print()
 
     wait_input("确认 IMU 平稳放置后按 Enter")
@@ -397,25 +397,25 @@ def step_6_live(driver, log):
 
 def main():
     parser = argparse.ArgumentParser(description="YIS321 IMU 完整测试")
-    parser.add_argument("--port", default="COM5", help="IMU 串口名")
-    parser.add_argument("--baud", type=int, default=460800, help="波特率")
+    parser.add_argument("--port", default="COM15", help="IMU 串口名")
+    parser.add_argument("--baud", type=int, default=921600, help="波特率")
     args = parser.parse_args()
 
     print()
-    print("╔══════════════════════════════════════════════════════════╗")
-    print("║          🧭 YIS321 IMU 完整测试 — 逐步验证               ║")
-    print("╠══════════════════════════════════════════════════════════╣")
-    print("║                                                        ║")
-    print("║  Step 0: 环境检查                                       ║")
-    print("║  Step 1: 连接 IMU 串口                                  ║")
-    print("║  Step 2: 首次数据读取                                    ║")
-    print("║  Step 3: 帧率和错误率                                    ║")
-    print("║  Step 4: 静态精度 (平放桌上)                             ║")
-    print("║  Step 5: 倾斜响应 (Pitch/Roll/Yaw 方向验证)              ║")
-    print("║  Step 6: 实时数据流                                     ║")
-    print("║                                                        ║")
-    print("║  ⚠️ IMU串口 ≠ 舵机串口! 注意选对端口!                     ║")
-    print("╚══════════════════════════════════════════════════════════╝")
+    print("==========================================================")
+    print("        YIS321 IMU 完整测试 — 逐步验证                    ")
+    print("==========================================================")
+    print("                                                        ")
+    print("  Step 0: 环境检查                                       ")
+    print("  Step 1: 连接 IMU 串口                                  ")
+    print("  Step 2: 首次数据读取                                    ")
+    print("  Step 3: 帧率和错误率                                    ")
+    print("  Step 4: 静态精度 (平放桌上)                             ")
+    print("  Step 5: 倾斜响应 (Pitch/Roll/Yaw 方向验证)              ")
+    print("  Step 6: 实时数据流                                     ")
+    print("                                                        ")
+    print("  IMU串口 ≠ 舵机串口! 注意选对端口!                     ")
+    print("==========================================================")
     print()
 
     log = TestLog()
@@ -435,17 +435,17 @@ def main():
         step_6_live(driver, log)
 
     except KeyboardInterrupt:
-        print("\n\n  ⏹ 测试中断!")
+        print("\n\n  测试中断!")
         log.log("中断", "WARN", "Ctrl+C")
     except Exception as e:
-        print(f"\n  ❌ 异常: {e}")
+        print(f"\n  异常: {e}")
         traceback.print_exc()
         log.log("异常", "FAIL", str(e))
     finally:
         driver.close()
         log.summary()
         log.save(report_file)
-        print(f"\n  📬 请把报告文件发回: {os.path.abspath(report_file)}")
+        print(f"\n  请把报告文件发回: {os.path.abspath(report_file)}")
 
 
 if __name__ == "__main__":

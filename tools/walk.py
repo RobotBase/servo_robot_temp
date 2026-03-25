@@ -5,10 +5,11 @@ walk.py — 基于 footCont 逆运动学的开环步行控制
 通过 CPG 生成足端轨迹，IK 计算关节角度，驱动舵机行走。
 
 用法:
-    python tools/walk.py --port COM3
-    python tools/walk.py --port COM3 --steps 10 --period 1.2
-    python tools/walk.py --port COM3 --mode stand
-    python tools/walk.py --port COM3 --mode test
+    python tools/walk.py --port COM11
+    python tools/walk.py --port COM11 --steps 10 --period 1.2
+    python tools/walk.py --port COM11 --mode stand
+    python tools/walk.py --port COM11 --mode test
+    python tools/walk.py --port COM11 --mode set_zero
 """
 
 import argparse
@@ -17,6 +18,8 @@ import math
 import os
 import sys
 import time
+from dataclasses import dataclass
+from datetime import datetime
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -45,16 +48,16 @@ class RobotDimensions:
 # ╚══════════════════════════════════════════════════════════════╝
 
 DEFAULT_ZERO = {
-    "left_hip_yaw": 446,
-    "left_hip_pitch": 809,
-    "left_knee": 462,
-    "left_ankle_pitch": 431,
-    "left_ankle_roll": 560,
-    "right_hip_yaw": 380,
-    "right_hip_pitch": 475,
-    "right_knee": 465,
-    "right_ankle_pitch": 812,
-    "right_ankle_roll": 635,
+    "right_hip_yaw": 446,
+    "right_hip_pitch": 809,
+    "right_knee": 462,
+    "right_ankle_pitch": 431,
+    "right_ankle_roll": 560,
+    "left_hip_yaw": 380,
+    "left_hip_pitch": 475,
+    "left_knee": 465,
+    "left_ankle_pitch": 812,
+    "left_ankle_roll": 635,
 }
 
 
@@ -65,10 +68,37 @@ def load_zero_position(filepath: str = None) -> dict[str, int]:
             data = json.load(f)
         if data.get("keyframes"):
             zero = data["keyframes"][0]["positions"]
-            print(f"✅ 零位已从 {filepath} 加载")
+            print(f"零位已从 {filepath} 加载")
             return zero
-    print("⚠️ 使用默认零位")
+    print("使用默认零位")
     return DEFAULT_ZERO.copy()
+
+
+def save_zero_position(robot: Robot, filepath: str) -> dict[str, int]:
+    positions = robot.get_all_positions()
+    missing = [name for name, pos in positions.items() if pos is None]
+    if missing:
+        raise RuntimeError(f"以下关节读取失败，无法保存零位: {', '.join(missing)}")
+
+    zero = {name: int(pos) for name, pos in positions.items() if pos is not None}
+    data = {
+        "name": "零位",
+        "description": "walk.py set_zero 生成",
+        "created_at": datetime.now().astimezone().isoformat(),
+        "frame_count": 1,
+        "total_duration_ms": 0,
+        "keyframes": [
+            {
+                "timestamp_ms": 0,
+                "positions": zero,
+            }
+        ],
+    }
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"新零位已保存: {filepath}")
+    return zero
 
 
 # ╔══════════════════════════════════════════════════════════════╗
@@ -145,28 +175,28 @@ print(f"[IK] 站立角度 (度): K0={math.degrees(STAND_K0):.1f}  "
 # 关节映射: IK输出 → 舵机原始值
 # direction: IK角度增大时，舵机值应该增大(+1)还是减小(-1)
 # 从手动示教数据推断:
-#   left_hip_pitch(K0):  值增大 → 前摆  → dir=+1
-#   right_hip_pitch(K0): 值减小 → 前摆  → dir=-1
-#   left_knee(H):       值减小 → 弯曲   (462→396)  → dir=-1
-#   right_knee(H):      值增大 → 弯曲   (465→558)  → dir=+1
-#   left_ankle_pitch(A0): 值减小 → 补偿  → dir=-1
-#   right_ankle_pitch(A0): 值增大 → 补偿  → dir=+1
+#   right_hip_pitch(K0):  值增大 → 前摆  → dir=+1
+#   left_hip_pitch(K0): 值减小 → 前摆  → dir=-1
+#   right_knee(H):       值减小 → 弯曲   (462→396)  → dir=-1
+#   left_knee(H):      值增大 → 弯曲   (465→558)  → dir=+1
+#   right_ankle_pitch(A0): 值减小 → 补偿  → dir=-1
+#   left_ankle_pitch(A0): 值增大 → 补偿  → dir=+1
 
 JOINT_MAP = {
-    "left": {
-        # (零位key, IK分量索引, 方向)
-        "hip_yaw":     ("left_hip_yaw",     1, -1),   # K1 (roll)
-        "hip_pitch":   ("left_hip_pitch",    0, +1),   # K0 ← 已修正
-        "knee":        ("left_knee",         2, -1),   # H
-        "ankle_pitch": ("left_ankle_pitch",  3, -1),   # A0 ← 已修正
-        "ankle_roll":  ("left_ankle_roll",   4, -1),   # A1
-    },
     "right": {
-        "hip_yaw":     ("right_hip_yaw",     1, +1),   # K1 (roll)
-        "hip_pitch":   ("right_hip_pitch",   0, -1),   # K0 ← 已修正
-        "knee":        ("right_knee",        2, +1),   # H
-        "ankle_pitch": ("right_ankle_pitch", 3, +1),   # A0 ← 已修正
-        "ankle_roll":  ("right_ankle_roll",  4, +1),   # A1
+        # (零位key, IK分量索引, 方向)
+        "hip_yaw":     ("right_hip_yaw",     1, -1),   # K1 (roll)
+        "hip_pitch":   ("right_hip_pitch",    0, +1),   # K0 ← 已修正
+        "knee":        ("right_knee",         2, -1),   # H
+        "ankle_pitch": ("right_ankle_pitch",  3, -1),   # A0 ← 已修正
+        "ankle_roll":  ("right_ankle_roll",   4, -1),   # A1
+    },
+    "left": {
+        "hip_yaw":     ("left_hip_yaw",     1, +1),   # K1 (roll)
+        "hip_pitch":   ("left_hip_pitch",   0, -1),   # K0 ← 已修正
+        "knee":        ("left_knee",        2, +1),   # H
+        "ankle_pitch": ("left_ankle_pitch", 3, +1),   # A0 ← 已修正
+        "ankle_roll":  ("left_ankle_roll",  4, +1),   # A1
     },
 }
 
@@ -178,6 +208,7 @@ def ik_to_servo(
     ik_angles: tuple[float, ...],
     side: str,
     zero: dict[str, int],
+    ankle_pitch_limit_deg: float | None = None,
 ) -> dict[str, int]:
     """将 IK 角度转换为舵机原始位置值
 
@@ -196,6 +227,9 @@ def ik_to_servo(
 
         # 弧度 → 度 → 舵机单位
         delta_servo = math.degrees(delta_rad) * SERVO_UNITS_PER_DEG
+        if ankle_pitch_limit_deg is not None and joint_short == "ankle_pitch":
+            max_delta_servo = ankle_pitch_limit_deg * SERVO_UNITS_PER_DEG
+            delta_servo = max(-max_delta_servo, min(max_delta_servo, delta_servo))
 
         # 应用方向和零位
         joint_name = f"{side}_{joint_short}"
@@ -213,51 +247,102 @@ class GaitParams:
     """步态参数"""
     def __init__(self):
         self.period: float = 1.2        # 完整步态周期 (秒)
-        self.dt: float = 0.02           # 控制周期 (秒), 50Hz
+        self.dt: float = 0.2           # 控制周期 (秒), 50Hz
         self.stride: float = 20.0       # 步幅 (mm), 前后各 ±stride/2
-        self.lift_height: float = 15.0  # 抬脚高度 (mm)
-        self.sway: float = 8.0          # 横向摆动幅度 (mm)
+        self.lift_height: float = 26.0  # 抬脚高度 (mm)
+        self.sway: float = 11.0         # 横向摆动幅度 (mm)
+        self.stance_width: float = 8.0
+        self.left_stride_scale: float = 1.18
+        self.action_scale: float = 1.0
+        self.ankle_pitch_limit_deg: float = 45.0
+        self.pre_shift_ratio: float = 0.30
+        self.crouch_depth: float = 8.0
+        self.weight_shift: float = 10.0
+        self.landing_ankle_relax: float = 0.35
+        self.yaw_trim: float = 2.0      # 偏航修正(mm): 正值更偏左, 用于纠正向右偏
         self.height: float = RobotDimensions.HEIGHT  # 站立高度
 
 
-def foot_trajectory(phase: float, params: GaitParams):
-    """计算单脚足端轨迹
+def smoothstep(x: float) -> float:
+    u = max(0.0, min(1.0, x))
+    return u * u * (3.0 - 2.0 * u)
 
-    phase (0~1):
-        0.0~0.5 = 支撑期 (脚在地面, 向后推)
-        0.5~1.0 = 摆动期 (脚抬起, 向前摆)
 
-    Returns:
-        (x, y, h): 足端位置 (mm)
-        x = 前后 (前为正)
-        y = 横向偏移 (正=向身体外侧)
-        h = 垂直高度 (踝→髋)
-    """
-    two_pi = 2.0 * math.pi
-    half_stride = params.stride / 2.0
+@dataclass
+class ForwardPhase:
+    swing_leg: str
+    phase: float
+    pre_shift_ratio: float
+    cycle_index: int
 
-    # ── 前后方向 (x) ──
-    # 支撑期: 从前到后 (脚在地面推身体前进)
-    # 摆动期: 从后到前 (脚抬起向前摆)
-    # 用正弦曲线平滑: 支撑期前半→后半, 摆动期后半→前半
-    x = -half_stride * math.sin(two_pi * phase)
 
-    # ── 横向方向 (y) ──
-    # 支撑期: 身体重心向支撑腿侧移
-    y = params.sway * math.sin(two_pi * phase)
+@dataclass
+class FootTarget:
+    x: float
+    y: float
+    h: float
+    landing_progress: float
 
-    # ── 高度方向 (h) ──
-    # 支撑期: 恒定高度
-    # 摆动期: 正弦抬脚
-    if 0.5 <= phase < 1.0:
-        swing_phase = (phase - 0.5) / 0.5  # 0~1 in swing
-        lift = params.lift_height * math.sin(math.pi * swing_phase)
+
+@dataclass
+class ForwardFramePlan:
+    phase: ForwardPhase
+    left: FootTarget
+    right: FootTarget
+
+
+def plan_forward_phase(t: float, params: GaitParams) -> ForwardPhase:
+    gait_phase = (t % params.period) / params.period
+    cycle_index = int(t / params.period) if params.period > 0 else 0
+    if gait_phase < 0.5:
+        swing_leg = "right"
+        phase = gait_phase / 0.5
     else:
-        lift = 0.0
+        swing_leg = "left"
+        phase = (gait_phase - 0.5) / 0.5
+    pre_shift_ratio = max(0.05, min(0.7, params.pre_shift_ratio))
+    return ForwardPhase(swing_leg=swing_leg, phase=phase, pre_shift_ratio=pre_shift_ratio, cycle_index=cycle_index)
 
-    h = params.height + lift  # 抬脚时 h 增大 (脚离地更远)
 
-    return x, y, h
+def leg_trajectory(leg: str, phase_info: ForwardPhase, params: GaitParams) -> FootTarget:
+    stride = params.stride * params.action_scale
+    half_stride = stride / 2.0
+    lift_height = params.lift_height * params.action_scale
+    pre = phase_info.pre_shift_ratio
+    phase = phase_info.phase
+    swing_leg = phase_info.swing_leg
+    crouch = params.crouch_depth * math.sin(math.pi * phase)
+    shift_sign = 1.0 if (swing_leg == "left" and leg == "right") or (swing_leg == "right" and leg == "left") else -1.0
+    shift_gain = smoothstep(phase / pre) if phase < pre else 1.0
+    y = params.stance_width + shift_sign * params.weight_shift * shift_gain
+    x = 0.0
+    lift = 0.0
+    landing_progress = 0.0
+
+    if leg == swing_leg and phase >= pre:
+        swing_phase = (phase - pre) / (1.0 - pre)
+        x = -half_stride * math.cos(math.pi * swing_phase)
+        lift = lift_height * (math.sin(math.pi * swing_phase) ** 1.5)
+        landing_progress = smoothstep((swing_phase - 0.75) / 0.25)
+    elif leg != swing_leg:
+        if phase < pre:
+            x = -half_stride
+        else:
+            support_phase = (phase - pre) / (1.0 - pre)
+            x = -half_stride * math.cos(math.pi * support_phase)
+
+    if leg == "left":
+        x *= params.left_stride_scale
+
+    h = params.height - crouch + lift
+    return FootTarget(x=x, y=y, h=h, landing_progress=landing_progress)
+
+
+def build_forward_frame_plan(t: float, params: GaitParams) -> ForwardFramePlan:
+    phase_info = plan_forward_phase(t, params)
+    left = leg_trajectory("left", phase_info, params)
+    right = leg_trajectory("right", phase_info, params)
+    return ForwardFramePlan(phase=phase_info, left=left, right=right)
 
 
 def generate_frame(
@@ -275,15 +360,13 @@ def generate_frame(
     Returns:
         {关节名: 原始舵机值}
     """
-    half_period = params.period / 2.0
+    plan = build_forward_frame_plan(t, params)
+    lx, ly, lh = plan.left.x, plan.left.y, plan.left.h
+    rx, ry, rh = plan.right.x, plan.right.y, plan.right.h
 
-    # 左右腿相位 (0~1), 错开半周期
-    left_phase = (t % half_period) / half_period
-    right_phase = ((t + half_period / 2.0) % half_period) / half_period
-
-    # 计算足端轨迹
-    lx, ly, lh = foot_trajectory(left_phase, params)
-    rx, ry, rh = foot_trajectory(right_phase, params)
+    if params.yaw_trim != 0.0:
+        lx -= params.yaw_trim
+        rx += params.yaw_trim
 
     # 逆运动学: 足端 → 关节角
     left_angles = foot_cont(lx, ly, lh)
@@ -291,8 +374,10 @@ def generate_frame(
 
     # 关节角 → 舵机值
     frame = {}
-    frame.update(ik_to_servo(left_angles, "left", zero))
-    frame.update(ik_to_servo(right_angles, "right", zero))
+    left_limit = params.ankle_pitch_limit_deg * (1.0 - params.landing_ankle_relax * plan.left.landing_progress)
+    right_limit = params.ankle_pitch_limit_deg * (1.0 - params.landing_ankle_relax * plan.right.landing_progress)
+    frame.update(ik_to_servo(left_angles, "left", zero, left_limit))
+    frame.update(ik_to_servo(right_angles, "right", zero, right_limit))
 
     return frame
 
@@ -303,15 +388,15 @@ def generate_frame(
 
 def do_stand(robot: Robot, zero: dict[str, int]):
     """站立"""
-    print("\n🧍 进入站立姿态...")
+    print("\n进入站立姿态...")
     robot.set_joints_raw(zero, 1500)
     time.sleep(2.0)
-    print("✅ 站立就绪")
+    print("站立就绪")
 
 
 def do_test(robot: Robot, zero: dict[str, int]):
     """IK 测试: 在站立基础上小幅前后摆腿, 验证方向"""
-    print("\n🔧 IK 验证测试")
+    print("\nIK 验证测试")
     do_stand(robot, zero)
     time.sleep(1)
 
@@ -344,14 +429,21 @@ def do_test(robot: Robot, zero: dict[str, int]):
     print("\n  回到站立...")
     robot.set_joints_raw(zero, 800)
     time.sleep(1)
-    print("✅ IK 测试完成")
+    print("IK 测试完成")
 
 
 def do_walk(robot: Robot, zero: dict[str, int], params: GaitParams, steps: int = 6):
     """开环步行"""
     total_time = steps * params.period / 2.0
-    print(f"\n🚶 开始行走: {steps} 步, 周期 {params.period}s, 预计 {total_time:.1f}s")
+    print(f"\n开始行走: {steps} 步, 周期 {params.period}s, 预计 {total_time:.1f}s")
     print(f"   步幅: {params.stride}mm, 抬脚: {params.lift_height}mm, 侧摆: {params.sway}mm")
+    print(f"   双脚外扩: {params.stance_width}mm")
+    print(f"   左腿步幅系数: {params.left_stride_scale:.2f}, 动作放大: {params.action_scale:.2f}x")
+    print(f"   踝前后角度限制: ±{params.ankle_pitch_limit_deg:.1f}°")
+    print(f"   偏航修正: {params.yaw_trim}mm")
+    print(f"   预移重心占比: {params.pre_shift_ratio:.2f}, 下蹲深度: {params.crouch_depth:.1f}mm")
+    print(f"   重心横移: {params.weight_shift:.1f}mm, 落地缓冲: {params.landing_ankle_relax:.2f}")
+    print("   正向流程: phase_plan -> leg_target -> yaw_trim -> ik -> servo")
     print(f"   控制频率: {1/params.dt:.0f}Hz\n")
 
     do_stand(robot, zero)
@@ -382,28 +474,47 @@ def do_walk(robot: Robot, zero: dict[str, int], params: GaitParams, steps: int =
                 time.sleep(params.dt - elapsed)
 
     except KeyboardInterrupt:
-        print("\n\n⏹ 中断!")
+        print("\n\n中断!")
 
-    print("\n🧍 回到站立...")
+    print("\n回到站立...")
     robot.set_joints_raw(zero, 1000)
     time.sleep(1.5)
-    print(f"✅ 行走完成 (耗时 {time.time()-start:.1f}s)")
+    print(f"行走完成 (耗时 {time.time()-start:.1f}s)")
 
 
 def main():
     parser = argparse.ArgumentParser(description="footCont IK 开环步行")
-    parser.add_argument("--port", default="COM3", help="串口")
-    parser.add_argument("--mode", default="walk", choices=["walk", "stand", "test"])
-    parser.add_argument("--steps", type=int, default=6, help="步数")
+    parser.add_argument("--port", default="COM11", help="串口")
+    parser.add_argument("--mode", default="walk", choices=["walk", "stand", "test", "set_zero"])
+    parser.add_argument("--steps", type=int, default=10, help="步数")
     parser.add_argument("--period", type=float, default=1.2, help="步态周期 (s)")
     parser.add_argument("--stride", type=float, default=20, help="步幅 (mm)")
-    parser.add_argument("--lift", type=float, default=15, help="抬脚高度 (mm)")
-    parser.add_argument("--sway", type=float, default=8, help="侧摆 (mm)")
+    parser.add_argument("--lift", type=float, default=26, help="抬脚高度 (mm)")
+    parser.add_argument("--sway", type=float, default=11, help="侧摆 (mm)")
+    parser.add_argument("--stance-width", type=float, default=8.0, help="双脚外扩距离 (mm)")
+    parser.add_argument("--left-stride-scale", type=float, default=1.18,
+                        help="左腿步幅系数(>1增大左腿幅度)")
+    parser.add_argument("--action-scale", type=float, default=1.0,
+                        help="动作整体放大倍率(>1 放大 stride/lift/sway)")
+    parser.add_argument("--ankle-pitch-limit-deg", type=float, default=45.0,
+                        help="踝前后角度变化限制(度)")
+    parser.add_argument("--pre-shift-ratio", type=float, default=0.30,
+                        help="抬腿前重心转移占半步比例")
+    parser.add_argument("--crouch-depth", type=float, default=8.0,
+                        help="迈步下蹲深度(mm)")
+    parser.add_argument("--weight-shift", type=float, default=10.0,
+                        help="重心横向转移(mm)")
+    parser.add_argument("--landing-ankle-relax", type=float, default=0.35,
+                        help="落地踝缓冲比例(0~1)")
+    parser.add_argument("--yaw-trim", type=float, default=2.0,
+                        help="偏航修正(mm)，正值会让机器人更偏左(用于修正向右偏)")
     parser.add_argument("--height", type=float, default=190, help="站立高度 (mm)")
     parser.add_argument("--zero-file", default=None, help="零位文件")
     args = parser.parse_args()
 
-    # 查找零位文件
+    default_zero_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "motions", "零位.json")
+    )
     zf = args.zero_file
     if zf is None:
         for c in [
@@ -413,7 +524,9 @@ def main():
             if os.path.exists(c):
                 zf = c
                 break
-    zero = load_zero_position(zf)
+    load_zf = zf
+    save_zf = os.path.abspath(args.zero_file) if args.zero_file else (os.path.abspath(zf) if zf else default_zero_path)
+    zero = load_zero_position(load_zf)
 
     # 更新尺寸 (如果用户指定了不同高度)
     RobotDimensions.HEIGHT = args.height
@@ -424,6 +537,15 @@ def main():
     params.stride = args.stride
     params.lift_height = args.lift
     params.sway = args.sway
+    params.stance_width = args.stance_width
+    params.left_stride_scale = args.left_stride_scale
+    params.action_scale = args.action_scale
+    params.ankle_pitch_limit_deg = args.ankle_pitch_limit_deg
+    params.pre_shift_ratio = args.pre_shift_ratio
+    params.crouch_depth = args.crouch_depth
+    params.weight_shift = args.weight_shift
+    params.landing_ankle_relax = args.landing_ankle_relax
+    params.yaw_trim = args.yaw_trim
     params.height = args.height
 
     robot = Robot(port=args.port)
@@ -437,15 +559,19 @@ def main():
                 time.sleep(1)
         elif args.mode == "test":
             do_test(robot, zero)
+        elif args.mode == "set_zero":
+            print("\n读取当前姿态并保存为零位...")
+            save_zero_position(robot, save_zf)
+            print("零位重设完成")
         elif args.mode == "walk":
             do_walk(robot, zero, params, steps=args.steps)
     except KeyboardInterrupt:
-        print("\n⏹ 中断! 回到站立...")
+        print("\n中断! 回到站立...")
         robot.set_joints_raw(zero, 1000)
         time.sleep(1.5)
     finally:
         robot.disconnect()
-        print("👋 已断开")
+        print("已断开")
 
 
 if __name__ == "__main__":

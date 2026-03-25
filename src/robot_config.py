@@ -107,21 +107,21 @@ ROBOT_CONFIG = RobotConfig(
     left_leg=LegConfig(
         name="left",
         joints=[
-            JointConfig(servo_id=1,  name="left_hip_yaw",     home_pos=500, direction=1),
-            JointConfig(servo_id=2,  name="left_hip_pitch",   home_pos=500, direction=1),
-            JointConfig(servo_id=3,  name="left_knee",        home_pos=500, direction=1),
-            JointConfig(servo_id=4,  name="left_ankle_pitch", home_pos=500, direction=1),
-            JointConfig(servo_id=5,  name="left_ankle_roll",  home_pos=500, direction=1),
+            JointConfig(servo_id=6,  name="left_hip_yaw",     home_pos=500, direction=1),
+            JointConfig(servo_id=7,  name="left_hip_pitch",   home_pos=500, direction=1),
+            JointConfig(servo_id=8,  name="left_knee",        home_pos=500, direction=1),
+            JointConfig(servo_id=9,  name="left_ankle_pitch", home_pos=500, direction=1),
+            JointConfig(servo_id=10, name="left_ankle_roll",  home_pos=500, direction=1),
         ],
     ),
     right_leg=LegConfig(
         name="right",
         joints=[
-            JointConfig(servo_id=6,  name="right_hip_yaw",     home_pos=500, direction=1),
-            JointConfig(servo_id=7,  name="right_hip_pitch",   home_pos=500, direction=1),
-            JointConfig(servo_id=8,  name="right_knee",        home_pos=500, direction=1),
-            JointConfig(servo_id=9,  name="right_ankle_pitch", home_pos=500, direction=1),
-            JointConfig(servo_id=10, name="right_ankle_roll",  home_pos=500, direction=1),
+            JointConfig(servo_id=1,  name="right_hip_yaw",     home_pos=500, direction=1),
+            JointConfig(servo_id=2,  name="right_hip_pitch",   home_pos=500, direction=1),
+            JointConfig(servo_id=3,  name="right_knee",        home_pos=500, direction=1),
+            JointConfig(servo_id=4,  name="right_ankle_pitch", home_pos=500, direction=1),
+            JointConfig(servo_id=5,  name="right_ankle_roll",  home_pos=500, direction=1),
         ],
     ),
 )
